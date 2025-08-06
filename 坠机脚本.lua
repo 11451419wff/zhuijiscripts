@@ -1,7 +1,7 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "坠机脚本V1.011(测试版)",
+   Name = "坠机脚本V1.012(测试版)",
    Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
    LoadingTitle = "坠机脚本启动中...",
    LoadingSubtitle = "一个神人做的",
@@ -40,7 +40,7 @@ local Window = Rayfield:CreateWindow({
 local Tab = Window:CreateTab("声明", 4483362458) -- Title, Image
 local Section = Tab:CreateSection("声明：")
 local Divider = Tab:CreateDivider()
-local Section = Tab:CreateSection("此脚本为纯缝合脚本（目前版本有134个脚本）")
+local Section = Tab:CreateSection("此脚本为纯缝合脚本（目前版本有137个脚本）")
 local Section = Tab:CreateSection("如有倒卖全家4万")
 local Section = Tab:CreateSection("作者QQ号：1994572625")
 local Section = Tab:CreateSection("QQ群：1055869706")
@@ -48,10 +48,7 @@ local Section = Tab:CreateSection("有些功能点了说callback error，但实�
 local Divider = Tab:CreateDivider()
 local Section = Tab:CreateSection("更新内容：")
 local Section = Tab:CreateSection("新添加了一些脚本")
-local Section = Tab:CreateSection("棍母")
-local Section = Tab:CreateSection("棍母")
-local Section = Tab:CreateSection("棍母")
-local Section = Tab:CreateSection("对了，偷偷告诉你们，其实这个脚本是科比做的哟（不是）")
+local Section = Tab:CreateSection("添加了一个彩蛋")
 
 local Tab = Window:CreateTab("通用脚本", 4483362458) -- Title, Image
 local Section = Tab:CreateSection("玩家属性")
@@ -5094,6 +5091,12 @@ local Button = Tab:CreateButton({
    end,
 })
 local Button = Tab:CreateButton({
+   Name = "零重力",
+   Callback = function(v)
+      v = loadstring(game:HttpGet("https://raw.githubusercontent.com/Bac0nHck/Scripts/refs/heads/main/zerogravity"))()-- The function that takes place when the button is pressed
+   end,
+})
+local Button = Tab:CreateButton({
    Name = "聊天框画画",
    Callback = function(v)
       v = loadstring(game:HttpGet("https://raw.githubusercontent.com/ocfi/_/refs/heads/main/a"))() -- The function that takes place when the button is pressed
@@ -5124,6 +5127,221 @@ local Button = Tab:CreateButton({
    end,
 })
 local Button = Tab:CreateButton({
+   Name = "变成蜘蛛侠",
+   Callback = function()
+		loadstring([[
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Debris = game:GetService("Debris")
+
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+-- States
+local autoPull, noclip, webPhysics, spiderMode = false, false, false, false
+local targetPos, currentWeb = nil, nil
+
+-- GUI
+local guiMain, panelFrame, btnAuto, btnNoclip, btnSpider, subButtons = nil
+
+local function buildGui()
+    if guiMain then guiMain:Destroy() end
+    guiMain = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+    guiMain.ResetOnSpawn = false
+
+    panelFrame = Instance.new("Frame")
+    panelFrame.Size = UDim2.new(0, 210, 0, 260)
+    panelFrame.Position = UDim2.new(0.1, 0, 0.4, 0)
+    panelFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    panelFrame.BackgroundTransparency = 0.2
+    panelFrame.Active = true
+    panelFrame.Parent = guiMain
+
+    -- Make whole panel draggable (mobile + desktop)
+    local dragging = false
+    local dragStartPos = nil
+    local startPos = nil
+
+    panelFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStartPos = input.Position
+            startPos = panelFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    panelFrame.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+            local delta = input.Position - dragStartPos
+            panelFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+                                            startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+
+    -- Button creator
+    local function mk(text, y)
+        local btn = Instance.new("TextButton", panelFrame)
+        btn.Size = UDim2.new(1, -10, 0, 40)
+        btn.Position = UDim2.new(0, 5, 0, y)
+        btn.Text = text
+        btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+        btn.TextColor3 = Color3.new(1, 1, 1)
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextSize = 18
+        return btn
+    end
+
+    btnAuto = mk("Auto Walk: OFF", 10)
+    btnNoclip = mk("Noclip: OFF", 60)
+    btnSpider = mk("🕷 Spider‑Man Mode", 110)
+    local btnWebPull = mk("Web Pull: OFF", 160)
+    local btnWebPhys = mk("Web Physics: OFF", 210)
+
+    subButtons = {btnWebPull, btnWebPhys}
+    for _, b in ipairs(subButtons) do
+        b.Visible = false
+    end
+
+    btnSpider.MouseButton1Click:Connect(function()
+        spiderMode = not spiderMode
+        for _, b in ipairs(subButtons) do
+            b.Visible = spiderMode
+        end
+    end)
+
+    btnAuto.MouseButton1Click:Connect(function()
+        autoPull = not autoPull
+        btnAuto.Text = "Auto Walk: " .. (autoPull and "ON" or "OFF")
+        btnAuto.BackgroundColor3 = autoPull and Color3.fromRGB(0, 120, 255) or Color3.fromRGB(70, 70, 70)
+    end)
+
+    btnNoclip.MouseButton1Click:Connect(function()
+        noclip = not noclip
+        btnNoclip.Text = "Noclip: " .. (noclip and "ON" or "OFF")
+    end)
+
+    btnWebPull.MouseButton1Click:Connect(function()
+        webPhysics = false
+        autoPull = true
+        btnWebPull.Text = "Web Pull: ON"
+        btnWebPhys.Text = "Web Physics: OFF"
+    end)
+
+    btnWebPhys.MouseButton1Click:Connect(function()
+        webPhysics = true
+        autoPull = false
+        btnWebPhys.Text = "Web Physics: ON"
+        btnWebPull.Text = "Web Pull: OFF"
+    end)
+end
+
+local function createWeb(startPos, endPos)
+    if currentWeb then currentWeb:Destroy() end
+    local p1 = Instance.new("Part", workspace)
+    p1.Anchored = true
+    p1.CanCollide = false
+    p1.Transparency = 1
+    p1.CFrame = CFrame.new(startPos)
+    local p2 = Instance.new("Part", workspace)
+    p2.Anchored = true
+    p2.CanCollide = false
+    p2.Transparency = 1
+    p2.CFrame = CFrame.new(endPos)
+    local a1 = Instance.new("Attachment", p1)
+    local a2 = Instance.new("Attachment", p2)
+    local beam = Instance.new("Beam", p1)
+    beam.Attachment0 = a1
+    beam.Attachment1 = a2
+    beam.Width0 = 2
+    beam.Width1 = 2
+    beam.LightEmission = 1
+    beam.Texture = "rbxassetid://446111271"
+    beam.TextureMode = Enum.TextureMode.Stretch
+    beam.TextureLength = 1
+    beam.TextureSpeed = 2
+    beam.Color = ColorSequence.new(Color3.new(1, 1, 1))
+    beam.Transparency = NumberSequence.new(0.05)
+    currentWeb = Instance.new("Folder", workspace)
+    p1.Parent = currentWeb
+    p2.Parent = currentWeb
+end
+
+local function useWeb()
+    if not targetPos then
+        return
+    end
+    local char = player.Character or player.CharacterAdded:Wait()
+    local root = char:WaitForChild("HumanoidRootPart")
+    createWeb(root.Position, targetPos)
+    if webPhysics then
+        local bv = Instance.new("BodyVelocity", root)
+        bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+        bv.Velocity = (targetPos - root.Position).Unit * 100
+        Debris:AddItem(bv, 0.5)
+    elseif autoPull then
+        local tw = TweenService:Create(root, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {
+            CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+        })
+        tw:Play()
+    end
+end
+
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then
+        return
+    end
+    if
+        input.UserInputType == Enum.UserInputType.Touch
+        or input.UserInputType == Enum.UserInputType.MouseButton1
+    then
+        local ray = camera:ScreenPointToRay(input.Position.X, input.Position.Y)
+        local rp = RaycastParams.new()
+        rp.FilterDescendantsInstances = {player.Character}
+        rp.FilterType = Enum.RaycastFilterType.Blacklist
+        local hit = workspace:Raycast(ray.Origin, ray.Direction * 500, rp)
+        if hit then
+            targetPos = hit.Position
+            useWeb()
+        end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    local char = player.Character
+    if char then
+        if noclip then
+            for _, p in pairs(char:GetDescendants()) do
+                if p:IsA("BasePart") then
+                    p.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+player.CharacterAdded:Connect(function()
+    wait(1)
+    buildGui()
+    if targetPos then
+        wait(0.5)
+        useWeb()
+    end
+end)
+
+buildGui()
+]])()
+       -- The function that takes place when the button is pressed
+   end,
+})
+local Button = Tab:CreateButton({
    Name = "vape v4",
    Callback = function(v)
    v = loadstring(utf8.char(table.unpack({
@@ -5141,6 +5359,37 @@ local Button = Tab:CreateButton({
    Name = "音乐播放器",
    Callback = function(v)
       v = loadstring(game:HttpGet("https://raw.githubusercontent.com/AgentX771/ArgonHubX/main/Loader.lua"))() -- The function that takes place when the button is pressed
+   end,
+})
+local Button = Tab:CreateButton({
+   Name = "把角色变成彩色（再点一下为关闭）",
+   Callback = function()
+	        rainbowActive = not rainbowActive
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+
+        if rainbowActive then
+            
+            rainbowConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                local hue = tick() % 5 / 5 
+                local color = Color3.fromHSV(hue, 1, 1)
+
+                for _, part in pairs(character:GetDescendants()) do
+                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                        part.Color = color
+                    end
+                end
+            end)
+        else
+            
+            if rainbowConnection then rainbowConnection:Disconnect() end
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                    part.Color = Color3.new(1, 1, 1)
+                end
+            end
+        end
+       -- The function that takes place when the button is pressed
    end,
 })
 local Button = Tab:CreateButton({
@@ -5877,15 +6126,98 @@ local Button = Tab:CreateButton({
    end,
 })
 local Button = Tab:CreateButton({
+   Name = "c00lkid外网搬运",
+   Callback = function(v)
+      v = loadstring(game:HttpGet("https://raw.githubusercontent.com/MiRw3b/c00lgui-v3rx/main/c00lguiv3rx.lua"))() -- The function that takes place when the button is pressed
+   end,
+})
+local Button = Tab:CreateButton({
    Name = "1x1x1x1",
    Callback = function(v)
       v = loadstring(game:HttpGet(('https://pastebin.com/raw/JipYNCht'),true))() -- The function that takes place when the button is pressed
    end,
 })
 local Button = Tab:CreateButton({
+   Name = "召唤guest666",
+   Callback = function()
+		local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+local userId = 5097019383
+
+local function spawnGuest()
+	local model = Players:CreateHumanoidModelFromUserId(userId)
+	model.Name = "Guest666"
+	model.Parent = workspace
+
+	local root = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if root and model.PrimaryPart then
+		model:SetPrimaryPartCFrame(root.CFrame * CFrame.new(math.random(-5, 5), 0, math.random(-5, 5)))
+	end
+
+	local guestRoot = model:FindFirstChild("HumanoidRootPart")
+	if guestRoot then
+		local bp = Instance.new("BodyPosition", guestRoot)
+		bp.Position = guestRoot.Position + Vector3.new(0, 5, 0)
+		bp.MaxForce = Vector3.new(0, 5000, 0)
+		bp.D = 100
+		bp.P = 3000
+
+		local fire = Instance.new("Fire", guestRoot)
+		fire.Heat = 10
+		fire.Size = 10
+
+		local smoke = Instance.new("Smoke", guestRoot)
+		smoke.Color = Color3.new(0, 0, 0)
+		smoke.RiseVelocity = 5
+		smoke.Opacity = 0.5
+		smoke.Size = 10
+	end
+
+	local humanoid = model:FindFirstChild("Humanoid")
+	if humanoid then
+		local tPoseAnim = Instance.new("Animation")
+		tPoseAnim.AnimationId = "rbxassetid://235542946"
+		local track = humanoid:LoadAnimation(tPoseAnim)
+		track.Looped = true
+		track:Play()
+	end
+
+	return model
+end
+
+spawnGuest()
+
+local hint = Instance.new("Hint", workspace)
+
+for i = 100, 1, -1 do
+	hint.Text = "Countdown: " .. i
+	wait(1)
+end
+
+hint:Destroy()
+
+for _, player in pairs(Players:GetPlayers()) do
+	player:Kick("Server Shutdown")
+end
+       -- The function that takes place when the button is pressed
+   end,
+})
+local Button = Tab:CreateButton({
+   Name = "ink monster",
+   Callback = function(v)
+      v = loadstring(game:HttpGet("https://pastebin.com/raw/RvrJsRX9"))() -- The function that takes place when the button is pressed
+   end,
+})
+local Button = Tab:CreateButton({
    Name = "动画中心",
    Callback = function(v)
       v = loadstring(game:HttpGet("https://raw.githubusercontent.com/GamingScripter/Animation-Hub/main/Animation%20Gui", true))() -- The function that takes place when the button is pressed
+   end,
+})
+local Button = Tab:CreateButton({
+   Name = "仓鼠球",
+   Callback = function(v)
+      v = loadstring(game:HttpGet("https://raw.githubusercontent.com/KaterHub-Inc/scripts/refs/heads/main/unofficial-Projects/FEHamsterBall.lua"))() -- The function that takes place when the button is pressed
    end,
 })
 local Button = Tab:CreateButton({
@@ -12873,6 +13205,794 @@ local Button = Tab:CreateButton({
    Name = "Fire X Hub",
    Callback = function(v)
     	v = loadstring("\105\102\32\110\111\116\32\103\97\109\101\58\71\101\116\83\101\114\118\105\99\101\40\34\82\101\112\108\105\99\97\116\101\100\83\116\111\114\97\103\101\34\41\58\70\105\110\100\70\105\114\115\116\67\104\105\108\100\40\34\48\49\95\115\101\114\118\101\114\34\41\32\116\104\101\110\32\114\101\116\117\114\110\32\103\97\109\101\58\71\101\116\83\101\114\118\105\99\101\40\34\84\101\108\101\112\111\114\116\83\101\114\118\105\99\101\34\41\58\84\101\108\101\112\111\114\116\40\49\55\53\55\52\54\49\56\57\53\57\44\32\103\97\109\101\58\71\101\116\83\101\114\118\105\99\101\40\34\80\108\97\121\101\114\115\34\41\46\76\111\99\97\108\80\108\97\121\101\114\41\32\101\110\100\10\108\111\97\100\115\116\114\105\110\103\40\103\97\109\101\58\72\116\116\112\71\101\116\40\34\104\116\116\112\115\58\47\47\114\97\119\46\103\105\116\104\117\98\117\115\101\114\99\111\110\116\101\110\116\46\99\111\109\47\116\121\114\101\108\116\114\105\106\111\47\102\105\114\101\47\109\97\105\110\47\102\105\114\101\34\41\41\40\41\10")() -- The function that takes place when the button is pressed
+   end,
+})
+local Button = Tab:CreateButton({
+   Name = "Polaria Hub",
+   Callback = function(v)
+    	v = loadstring(game:HttpGet("https://pastefy.app/JmaD2ivk/raw"))() -- The function that takes place when the button is pressed
+   end,
+})
+local Button = Tab:CreateButton({
+   Name = "简易版Ghost Hub",
+   Callback = function()
+		-- GHOST UI Hub for Roblox
+-- Made by camreng1234 on scriptblox
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local StarterGui = game:GetService("StarterGui")
+
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local Camera = workspace.CurrentCamera
+
+-- Constants
+local NORMAL_WALKSPEED = 16
+local NORMAL_GRAVITY = workspace.Gravity
+
+-- Variables for states
+local flying = false
+local flySpeed = 100
+local flyBodyVelocity = nil
+local flyBodyGyro = nil
+
+local espEnabled = false
+local espHighlights = {}
+
+local noclipEnabled = false
+local noclipConnection = nil
+
+local humpEnabled = false
+local humpTarget = nil
+local humpAnimConnection = nil
+local humpFollowConnection = nil
+
+local glitchEnabled = false
+local glitchConnection = nil
+local glitchTargets = {}
+
+local distanceEspEnabled = false
+local distanceEspLabels = {}
+
+local gravityChanged = false
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GHOST_UIHub"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Notification on load
+StarterGui:SetCore("SendNotification", {
+	Title = "GHOST UI Hub";
+	Text = "Made by camreng1234 on scriptblox";
+	Duration = 5;
+})
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 280, 0, 400)
+mainFrame.Position = UDim2.new(1, -290, 0, 10) -- Top right with 10px margin
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.BorderSizePixel = 0
+mainFrame.BackgroundTransparency = 0.15
+mainFrame.Parent = screenGui
+mainFrame.ClipsDescendants = true
+mainFrame.Active = true
+
+-- UI Corner rounding
+local uicorner = Instance.new("UICorner")
+uicorner.CornerRadius = UDim.new(0, 8)
+uicorner.Parent = mainFrame
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Name = "Title"
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundTransparency = 1
+title.Text = "GHOST"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 22
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Parent = mainFrame
+
+-- Scrolling frame for buttons
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Name = "ScrollFrame"
+scrollFrame.Size = UDim2.new(1, 0, 1, -30)
+scrollFrame.Position = UDim2.new(0, 0, 0, 30)
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.ScrollBarThickness = 6
+scrollFrame.Parent = mainFrame
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local uiListLayout = Instance.new("UIListLayout")
+uiListLayout.Parent = scrollFrame
+uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+uiListLayout.Padding = UDim.new(0, 6)
+
+local uiPadding = Instance.new("UIPadding")
+uiPadding.Parent = scrollFrame
+uiPadding.PaddingTop = UDim.new(0, 6)
+uiPadding.PaddingLeft = UDim.new(0, 6)
+uiPadding.PaddingRight = UDim.new(0, 6)
+uiPadding.PaddingBottom = UDim.new(0, 6)
+
+-- Dragging functionality for mainFrame
+do
+	local dragging = false
+	local dragInput, dragStart, startPos
+
+	mainFrame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = mainFrame.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	mainFrame.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - dragStart
+			local newPos = UDim2.new(
+				math.clamp(startPos.X.Scale, 0, 1),
+				math.clamp(startPos.X.Offset + delta.X, 0, workspace.CurrentCamera.ViewportSize.X - mainFrame.AbsoluteSize.X),
+				math.clamp(startPos.Y.Scale, 0, 1),
+				math.clamp(startPos.Y.Offset + delta.Y, 0, workspace.CurrentCamera.ViewportSize.Y - mainFrame.AbsoluteSize.Y)
+			)
+			mainFrame.Position = newPos
+		end
+	end)
+end
+
+-- Helper function to create buttons
+local function createButton(text)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, 0, 0, 30)
+	btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+	btn.BorderSizePixel = 0
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Font = Enum.Font.GothamSemibold
+	btn.TextSize = 18
+	btn.Text = text
+	btn.AutoButtonColor = true
+	btn.Name = text:gsub("%s", "") -- Remove spaces for name
+	local btnCorner = Instance.new("UICorner")
+	btnCorner.CornerRadius = UDim.new(0, 6)
+	btnCorner.Parent = btn
+	return btn
+end
+
+-- Helper function to create textboxes
+local function createTextbox(placeholder)
+	local tb = Instance.new("TextBox")
+	tb.Size = UDim2.new(1, 0, 0, 25)
+	tb.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	tb.BorderSizePixel = 0
+	tb.TextColor3 = Color3.fromRGB(255, 255, 255)
+	tb.Font = Enum.Font.Gotham
+	tb.TextSize = 16
+	tb.PlaceholderText = placeholder
+	tb.ClearTextOnFocus = false
+	tb.Name = placeholder:gsub("%s", "") .. "Textbox"
+	local tbCorner = Instance.new("UICorner")
+	tbCorner.CornerRadius = UDim.new(0, 6)
+	tbCorner.Parent = tb
+	return tb
+end
+
+-- ========== BUTTONS AND TEXTBOXES ==========
+
+-- 1. FLY
+local btnFly = createButton("FLY")
+btnFly.Parent = scrollFrame
+
+-- 2. UNFLY
+local btnUnFly = createButton("UNFLY")
+btnUnFly.Parent = scrollFrame
+
+-- 3. ESP
+local btnESP = createButton("ESP")
+btnESP.Parent = scrollFrame
+
+-- 4. UN ESP
+local btnUnESP = createButton("UN ESP")
+btnUnESP.Parent = scrollFrame
+
+-- 5. NOCLIP
+local btnNoclip = createButton("NOCLIP")
+btnNoclip.Parent = scrollFrame
+
+-- 6. UN NOCLIP
+local btnUnNoclip = createButton("UN NOCLIP")
+btnUnNoclip.Parent = scrollFrame
+
+-- 7. WALK SPEED
+local btnWalkSpeed = createButton("WALK SPEED")
+btnWalkSpeed.Parent = scrollFrame
+
+-- 8. UN WALK SPEED
+local btnUnWalkSpeed = createButton("UN WALK SPEED")
+btnUnWalkSpeed.Parent = scrollFrame
+
+-- 9. TELEPORT + textbox
+local btnTeleport = createButton("TELEPORT")
+btnTeleport.Parent = scrollFrame
+local tbTeleport = createTextbox("Player name or first 3 letters")
+tbTeleport.Parent = scrollFrame
+
+-- 10. GLITCH
+local btnGlitch = createButton("GLITCH")
+btnGlitch.Parent = scrollFrame
+
+-- 11. UN GLITCH
+local btnUnGlitch = createButton("UN GLITCH")
+btnUnGlitch.Parent = scrollFrame
+
+-- 12. HUMP + textbox
+local btnHump = createButton("HUMP")
+btnHump.Parent = scrollFrame
+local tbHump = createTextbox("Player name or first 3 letters")
+tbHump.Parent = scrollFrame
+
+-- 13. UN HUMP
+local btnUnHump = createButton("UN HUMP")
+btnUnHump.Parent = scrollFrame
+
+-- 14. DISTANCE ESP
+local btnDistanceESP = createButton("DISTANCE ESP")
+btnDistanceESP.Parent = scrollFrame
+
+-- 15. UN DISTANCE ESP
+local btnUnDistanceESP = createButton("UN DISTANCE ESP")
+btnUnDistanceESP.Parent = scrollFrame
+
+-- 16. GRAVITY CHANGER + textbox
+local btnGravityChanger = createButton("GRAVITY CHANGER")
+btnGravityChanger.Parent = scrollFrame
+local tbGravityChanger = createTextbox("0-100")
+tbGravityChanger.Parent = scrollFrame
+
+-- 17. RESET GRAVITY
+local btnResetGravity = createButton("RESET GRAVITY")
+btnResetGravity.Parent = scrollFrame
+
+-- Update canvas size on layout change
+uiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	scrollFrame.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 10)
+end)
+
+-- ========== FUNCTIONALITY ==========
+
+-- FLY implementation
+local function startFly()
+	if flying then return end
+	flying = true
+
+	-- Create BodyVelocity and BodyGyro for smooth flying
+	flyBodyVelocity = Instance.new("BodyVelocity")
+	flyBodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+	flyBodyVelocity.Velocity = Vector3.new(0, 0, 0)
+	flyBodyVelocity.Parent = HumanoidRootPart
+
+	flyBodyGyro = Instance.new("BodyGyro")
+	flyBodyGyro.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+	flyBodyGyro.CFrame = HumanoidRootPart.CFrame
+	flyBodyGyro.Parent = HumanoidRootPart
+
+	-- Disable Humanoid's platform stand to allow flying
+	Humanoid.PlatformStand = false
+
+	-- Fly control variables
+	local speed = flySpeed
+	local moveDirection = Vector3.new(0, 0, 0)
+
+	local function updateFly()
+		if not flying then return end
+		local cameraCFrame = Camera.CFrame
+		local moveVec = Vector3.new(0, 0, 0)
+		if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+			moveVec = moveVec + cameraCFrame.LookVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+			moveVec = moveVec - cameraCFrame.LookVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+			moveVec = moveVec - cameraCFrame.RightVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+			moveVec = moveVec + cameraCFrame.RightVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+			moveVec = moveVec + Vector3.new(0, 1, 0)
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+			moveVec = moveVec - Vector3.new(0, 1, 0)
+		end
+		moveVec = moveVec.Unit * speed
+		if moveVec ~= moveVec then -- NaN check
+			moveVec = Vector3.new(0, 0, 0)
+		end
+		flyBodyVelocity.Velocity = moveVec
+		flyBodyGyro.CFrame = Camera.CFrame
+	end
+
+	-- Connect to RenderStepped for smooth flying
+	flyConnection = RunService.RenderStepped:Connect(updateFly)
+end
+
+local function stopFly()
+	if not flying then return end
+	flying = false
+	if flyBodyVelocity then
+		flyBodyVelocity:Destroy()
+		flyBodyVelocity = nil
+	end
+	if flyBodyGyro then
+		flyBodyGyro:Destroy()
+		flyBodyGyro = nil
+	end
+	if flyConnection then
+		flyConnection:Disconnect()
+		flyConnection = nil
+	end
+	Humanoid.PlatformStand = false
+end
+
+-- ESP implementation
+local function enableESP()
+	if espEnabled then return end
+	espEnabled = true
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+			local highlight = Instance.new("Highlight")
+			highlight.Adornee = plr.Character
+			highlight.FillTransparency = 0.5
+			highlight.OutlineTransparency = 0
+			highlight.Parent = plr.Character
+			espHighlights[plr] = highlight
+		end
+	end
+	-- Connect to player added and character added to add highlights dynamically
+	espConnection = Players.PlayerAdded:Connect(function(plr)
+		plr.CharacterAdded:Connect(function(char)
+			if espEnabled and plr ~= LocalPlayer then
+				wait(0.1)
+				if char and char:FindFirstChild("HumanoidRootPart") then
+					local highlight = Instance.new("Highlight")
+					highlight.Adornee = char
+					highlight.FillTransparency = 0.5
+					highlight.OutlineTransparency = 0
+					highlight.Parent = char
+					espHighlights[plr] = highlight
+				end
+			end
+		end)
+	end)
+	-- Rainbow color update loop
+	espRainbowConnection = RunService.RenderStepped:Connect(function()
+		if not espEnabled then return end
+		local time = tick()
+		for plr, highlight in pairs(espHighlights) do
+			local hue = (time * 60) % 360
+			local color = Color3.fromHSV(hue / 360, 1, 1)
+			highlight.FillColor = color
+			highlight.OutlineColor = color
+		end
+	end)
+end
+
+local function disableESP()
+	if not espEnabled then return end
+	espEnabled = false
+	for plr, highlight in pairs(espHighlights) do
+		if highlight and highlight.Parent then
+			highlight:Destroy()
+		end
+	end
+	espHighlights = {}
+	if espConnection then
+		espConnection:Disconnect()
+		espConnection = nil
+	end
+	if espRainbowConnection then
+		espRainbowConnection:Disconnect()
+		espRainbowConnection = nil
+	end
+end
+
+-- NOCLIP implementation
+local function enableNoclip()
+	if noclipEnabled then return end
+	noclipEnabled = true
+	noclipConnection = RunService.Stepped:Connect(function()
+		if Character then
+			for _, part in pairs(Character:GetChildren()) do
+				if part:IsA("BasePart") and part.CanCollide then
+					part.CanCollide = false
+				end
+			end
+		end
+	end)
+end
+
+local function disableNoclip()
+	if not noclipEnabled then return end
+	noclipEnabled = false
+	if noclipConnection then
+		noclipConnection:Disconnect()
+		noclipConnection = nil
+	end
+	if Character then
+		for _, part in pairs(Character:GetChildren()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = true
+			end
+		end
+	end
+end
+
+-- WALK SPEED implementation
+local function setWalkSpeed(speed)
+	if Humanoid then
+		Humanoid.WalkSpeed = speed
+	end
+end
+
+-- TELEPORT implementation
+local function teleportToPlayer(nameOrPrefix)
+	if not nameOrPrefix or nameOrPrefix == "" then return end
+	local targetPlayer = nil
+	local lowerInput = nameOrPrefix:lower()
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr.Name:lower():sub(1, #lowerInput) == lowerInput or (plr.DisplayName and plr.DisplayName:lower():sub(1, #lowerInput) == lowerInput) then
+			targetPlayer = plr
+			break
+		end
+	end
+	if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+	end
+end
+
+-- GLITCH implementation (head and neck only)
+local function startGlitch()
+	if glitchEnabled then return end
+	glitchEnabled = true
+
+	local function glitchPlayer(plr)
+		if not plr.Character then return end
+		local head = plr.Character:FindFirstChild("Head")
+		local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
+		if not head or not humanoid then return end
+		local neck = nil
+		for _, joint in pairs(head:GetJoints()) do
+			if joint.Name == "Neck" then
+				neck = joint
+				break
+			end
+		end
+		if not neck then
+			-- Try to find neck via HumanoidRootPart and Head CFrame difference
+			neck = humanoid:FindFirstChild("Neck")
+		end
+		if glitchTargets[plr] then return end -- Already glitching
+
+		local originalC0 = nil
+		if neck and neck:IsA("Motor6D") then
+			originalC0 = neck.C0
+		end
+
+		local glitching = true
+
+		local conn
+		conn = RunService.Heartbeat:Connect(function()
+			if not glitchEnabled or not plr.Character or not head or not neck or not neck:IsDescendantOf(plr.Character) then
+				conn:Disconnect()
+				if neck and originalC0 then
+					neck.C0 = originalC0
+				end
+				glitchTargets[plr] = nil
+				return
+			end
+			local t = tick() * 20
+			local offsetY = math.sin(t) * 2
+			head.CFrame = head.CFrame * CFrame.new(0, offsetY, 0)
+			if neck and neck:IsA("Motor6D") and originalC0 then
+				neck.C0 = originalC0 * CFrame.new(0, offsetY, 0)
+			end
+		end)
+		glitchTargets[plr] = conn
+	end
+
+	for _, plr in pairs(Players:GetPlayers()) do
+		glitchPlayer(plr)
+	end
+
+	Players.PlayerAdded:Connect(function(plr)
+		plr.CharacterAdded:Connect(function()
+			if glitchEnabled then
+				wait(0.1)
+				glitchPlayer(plr)
+			end
+		end)
+	end)
+end
+
+local function stopGlitch()
+	if not glitchEnabled then return end
+	glitchEnabled = false
+	for plr, conn in pairs(glitchTargets) do
+		if conn then
+			conn:Disconnect()
+		end
+		if plr.Character then
+			local head = plr.Character:FindFirstChild("Head")
+			local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
+			local neck = nil
+			if head and humanoid then
+				for _, joint in pairs(head:GetJoints()) do
+					if joint.Name == "Neck" then
+						neck = joint
+						break
+					end
+				end
+				if neck and neck:IsA("Motor6D") then
+					neck.C0 = neck.C0 -- Reset to current to avoid weirdness
+				end
+			end
+		end
+	end
+	glitchTargets = {}
+end
+
+-- HUMP implementation
+local function startHump(targetName)
+	if humpEnabled then return end
+	if not targetName or targetName == "" then return end
+	local targetPlayer = nil
+	local lowerInput = targetName:lower()
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr.Name:lower():sub(1, #lowerInput) == lowerInput or (plr.DisplayName and plr.DisplayName:lower():sub(1, #lowerInput) == lowerInput) then
+			targetPlayer = plr
+			break
+		end
+	end
+	if not targetPlayer or not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+
+	humpEnabled = true
+	humpTarget = targetPlayer
+
+	-- Animation: move back and forth fast behind target, facing them, on ground
+	local function humpStep()
+		if not humpEnabled or not humpTarget or not humpTarget.Character or not humpTarget.Character:FindFirstChild("HumanoidRootPart") then
+			return
+		end
+		local targetHRP = humpTarget.Character.HumanoidRootPart
+		local targetCF = targetHRP.CFrame
+		local behindOffset = -3 -- studs behind
+		local heightOffset = -3 -- on ground (approximate)
+		local directionToTarget = (targetCF.Position - HumanoidRootPart.Position).Unit
+		local desiredPos = targetCF * CFrame.new(0, heightOffset, behindOffset)
+		-- Face the target
+		local lookAt = CFrame.new(desiredPos.Position, targetCF.Position)
+		-- Oscillate back and forth fast
+		local oscillate = math.sin(tick() * 30) * 1.5
+		local offset = lookAt.LookVector * oscillate
+		local finalPos = desiredPos.Position + offset
+		HumanoidRootPart.CFrame = CFrame.new(finalPos, targetCF.Position)
+	end
+
+	humpAnimConnection = RunService.Heartbeat:Connect(function()
+		if not humpEnabled then return end
+		if not humpTarget or not humpTarget.Character or not humpTarget.Character:FindFirstChild("HumanoidRootPart") then
+			humpEnabled = false
+			if humpAnimConnection then
+				humpAnimConnection:Disconnect()
+				humpAnimConnection = nil
+			end
+			return
+		end
+		humpStep()
+	end)
+end
+
+local function stopHump()
+	if not humpEnabled then return end
+	humpEnabled = false
+	if humpAnimConnection then
+		humpAnimConnection:Disconnect()
+		humpAnimConnection = nil
+	end
+	humpTarget = nil
+end
+
+-- DISTANCE ESP implementation
+local function enableDistanceESP()
+	if distanceEspEnabled then return end
+	distanceEspEnabled = true
+
+	local function createDistanceLabel(plr)
+		if plr == LocalPlayer then return end
+		if distanceEspLabels[plr] then return end
+		local billboard = Instance.new("BillboardGui")
+		billboard.Name = "DistanceESP"
+		billboard.Adornee = nil
+		billboard.Size = UDim2.new(0, 100, 0, 30)
+		billboard.StudsOffset = Vector3.new(0, 3, 0)
+		billboard.AlwaysOnTop = true
+		billboard.Parent = screenGui
+
+		local textLabel = Instance.new("TextLabel")
+		textLabel.BackgroundTransparency = 1
+		textLabel.Size = UDim2.new(1, 0, 1, 0)
+		textLabel.TextColor3 = Color3.new(1, 1, 1)
+		textLabel.Font = Enum.Font.GothamBold
+		textLabel.TextSize = 18
+		textLabel.TextStrokeTransparency = 0
+		textLabel.Parent = billboard
+
+		distanceEspLabels[plr] = {Billboard = billboard, Label = textLabel}
+	end
+
+	for _, plr in pairs(Players:GetPlayers()) do
+		createDistanceLabel(plr)
+	end
+
+	Players.PlayerAdded:Connect(function(plr)
+		createDistanceLabel(plr)
+	end)
+
+	distanceEspConnection = RunService.RenderStepped:Connect(function()
+		if not distanceEspEnabled then return end
+		for plr, data in pairs(distanceEspLabels) do
+			if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+				data.Billboard.Adornee = plr.Character.HumanoidRootPart
+				local dist = (HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+				data.Label.Text = string.format("%s: %.1f studs", plr.Name, dist)
+			else
+				data.Billboard.Adornee = nil
+				data.Label.Text = ""
+			end
+		end
+	end)
+end
+
+local function disableDistanceESP()
+	if not distanceEspEnabled then return end
+	distanceEspEnabled = false
+	if distanceEspConnection then
+		distanceEspConnection:Disconnect()
+		distanceEspConnection = nil
+	end
+	for _, data in pairs(distanceEspLabels) do
+		if data.Billboard then
+			data.Billboard:Destroy()
+		end
+	end
+	distanceEspLabels = {}
+end
+
+-- GRAVITY CHANGER implementation
+local function setGravity(value)
+	value = tonumber(value)
+	if not value then return end
+	if value < 0 then value = 0 end
+	if value > 100 then value = 100 end
+	workspace.Gravity = value
+	gravityChanged = true
+end
+
+local function resetGravity()
+	workspace.Gravity = NORMAL_GRAVITY
+	gravityChanged = false
+end
+
+-- ========== BUTTON CONNECTIONS ==========
+
+btnFly.MouseButton1Click:Connect(function()
+	startFly()
+end)
+
+btnUnFly.MouseButton1Click:Connect(function()
+	stopFly()
+end)
+
+btnESP.MouseButton1Click:Connect(function()
+	enableESP()
+end)
+
+btnUnESP.MouseButton1Click:Connect(function()
+	disableESP()
+end)
+
+btnNoclip.MouseButton1Click:Connect(function()
+	enableNoclip()
+end)
+
+btnUnNoclip.MouseButton1Click:Connect(function()
+	disableNoclip()
+end)
+
+btnWalkSpeed.MouseButton1Click:Connect(function()
+	setWalkSpeed(100)
+end)
+
+btnUnWalkSpeed.MouseButton1Click:Connect(function()
+	setWalkSpeed(NORMAL_WALKSPEED)
+end)
+
+btnTeleport.MouseButton1Click:Connect(function()
+	teleportToPlayer(tbTeleport.Text)
+end)
+
+btnGlitch.MouseButton1Click:Connect(function()
+	startGlitch()
+end)
+
+btnUnGlitch.MouseButton1Click:Connect(function()
+	stopGlitch()
+end)
+
+btnHump.MouseButton1Click:Connect(function()
+	startHump(tbHump.Text)
+end)
+
+btnUnHump.MouseButton1Click:Connect(function()
+	stopHump()
+end)
+
+btnDistanceESP.MouseButton1Click:Connect(function()
+	enableDistanceESP()
+end)
+
+btnUnDistanceESP.MouseButton1Click:Connect(function()
+	disableDistanceESP()
+end)
+
+btnGravityChanger.MouseButton1Click:Connect(function()
+	setGravity(tbGravityChanger.Text)
+end)
+
+btnResetGravity.MouseButton1Click:Connect(function()
+	resetGravity()
+end)
+
+-- Cleanup on character respawn
+LocalPlayer.CharacterAdded:Connect(function(char)
+	Character = char
+	Humanoid = char:WaitForChild("Humanoid")
+	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
+	-- Reset walk speed and gravity on respawn
+	setWalkSpeed(NORMAL_WALKSPEED)
+	resetGravity()
+	-- Stop fly, noclip, hump, glitch on respawn
+	stopFly()
+	disableNoclip()
+	stopHump()
+	stopGlitch()
+	disableESP()
+	disableDistanceESP()
+end)
+
+    	-- The function that takes place when the button is pressed
    end,
 })
 local Button = Tab:CreateButton({
